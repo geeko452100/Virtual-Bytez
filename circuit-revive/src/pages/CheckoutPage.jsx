@@ -104,11 +104,22 @@ export default function CheckoutPage() {
 
           {error && <p className="text-sm text-danger">{error}</p>}
 
+          <section className="mb-5 rounded-lg border border-border/80 bg-surface-raised/40 p-4">
+            <h3 className="mb-2 text-base">Payment</h3>
+            <p className="text-sm leading-relaxed text-text-muted">
+              Every custom build is reviewed before billing. After we confirm your configuration
+              and parts availability, we&apos;ll email an invoice with payment instructions to{' '}
+              <strong className="text-text">{user?.email}</strong>. Your order remains{' '}
+              <span className="status-pill status-pill-pending inline-block px-2 py-0.5 text-xs">pending</span>{' '}
+              until payment is received.
+            </p>
+          </section>
+
           <Button type="submit" variant="primary" size="lg" disabled={submitting}>
-            {submitting ? 'Placing order…' : `Place order — ${formatPrice(subtotal)}`}
+            {submitting ? 'Submitting order…' : `Submit order — ${formatPrice(subtotal)}`}
           </Button>
           <p className="mt-3 text-sm text-text-muted">
-            Payment processing is handled offline for now. Your order will be marked pending until confirmed.
+            No payment is collected on this site. You&apos;ll receive an invoice by email to complete your purchase.
           </p>
         </form>
 

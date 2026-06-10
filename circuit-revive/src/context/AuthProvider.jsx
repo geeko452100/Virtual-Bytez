@@ -20,14 +20,27 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(isSupabaseConfigured)
   const [authError, setAuthError] = useState(null)
 
-  const refreshProfile = useCallback(async (userId) => {
+  const refreshProfile = useCallback(async (userId, authUser) => {
     const supabase = getSupabase()
     if (!supabase || !userId) {
       setProfile(null)
       return
     }
     try {
-      const data = await loadProfile(supabase, userId)
+      let data = await loadProfile(supabase, userId)
+      const metadataName = authUser?.user_metadata?.full_name?.trim()
+
+      if (data && !data.full_name?.trim() && metadataName) {
+        const { data: updated, error: updateError } = await supabase
+          .from('profiles')
+          .update({ full_name: metadataName })
+          .eq('id', userId)
+          .select()
+          .maybeSingle()
+
+        if (!updateError && updated) data = updated
+      }
+
       setProfile(data)
     } catch (err) {
       console.error('Failed to load profile', err)
@@ -45,7 +58,7 @@ export function AuthProvider({ children }) {
       if (!active) return
       setUser(session?.user ?? null)
       if (session?.user) {
-        refreshProfile(session.user.id).finally(() => {
+        refreshProfile(session.user.id, session.user).finally(() => {
           if (active) setLoading(false)
         })
       } else {
@@ -58,7 +71,7 @@ export function AuthProvider({ children }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        refreshProfile(session.user.id)
+        refreshProfile(session.user.id, session.user)
       } else {
         setProfile(null)
       }

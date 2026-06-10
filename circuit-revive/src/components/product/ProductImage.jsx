@@ -5,6 +5,7 @@ const CATEGORY_ICONS = {
   audio: '🎧',
   gaming: '🎮',
   peripherals: '⌨️',
+  cameras: '📷',
 }
 
 export default function ProductImage({ product, className = '' }) {

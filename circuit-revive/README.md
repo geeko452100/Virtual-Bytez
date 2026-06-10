@@ -13,7 +13,7 @@ Browse restored classics — Commodore 64, Macintosh SE, Walkman, Game Boy, Mode
 | **Cart & checkout** | Persistent cart UI, Supabase order creation with line items |
 | **Auth** | Email/password sign-up and sign-in via Supabase Auth |
 | **Saved builds** | Logged-in users save and reload custom configurations |
-| **Admin** | Manage catalog, stock, and order statuses (admin role required) |
+| **Admin** | Manage catalog, stock, order statuses, and shipment tracking (admin role required) |
 | **Routing** | Shareable URLs — `/shop`, `/shop/c64`, `/checkout`, `/account`, `/admin` |
 
 Without Supabase credentials the app falls back to the local seed catalog; auth, checkout, and saved builds require a configured backend.
@@ -32,9 +32,11 @@ npm run dev
 ### 2. Set up Supabase
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run the migration:
+2. In **SQL Editor**, run migrations in order (or use `npm run migrate` with `DATABASE_URL` set):
    ```
    supabase/migrations/001_initial_schema.sql
+   supabase/migrations/002_fix_admin_rls_recursion.sql
+   supabase/migrations/003_add_order_tracking.sql
    ```
 3. In **Project Settings → API**, copy the **Project URL** and **anon public** key into `.env`:
 
@@ -67,6 +69,7 @@ Restart `npm run dev` after changing `.env`.
 | `npm run build` | Production build |
 | `npm run preview` | Preview production build |
 | `npm run lint` | ESLint |
+| `npm run migrate` | Apply pending SQL migrations |
 | `npm run seed` | Upload local catalog to Supabase |
 
 ## Project structure
@@ -76,7 +79,7 @@ circuit-revive/
 ├── supabase/migrations/     # Database schema + RLS policies
 ├── scripts/seed-catalog.mjs # CLI seed helper
 ├── src/
-│   ├── api/                 # Supabase queries (products, orders, saved builds)
+│   ├── api/                 # Supabase queries (products, orders, tracking, saved builds)
 │   ├── context/             # Auth, products, cart providers
 │   ├── hooks/
 │   ├── lib/                 # Supabase client, config, mappers
@@ -93,7 +96,7 @@ circuit-revive/
 | `profiles` | User metadata + `customer` / `admin` role |
 | `products` | Catalog, customization JSON, images, stock, condition grade |
 | `saved_builds` | User-named configuration snapshots |
-| `orders` | Checkout records with shipping address |
+| `orders` | Checkout records with shipping address, carrier, tracking number, and cached shipment status |
 | `order_items` | Line items with selections and pricing |
 
 Row Level Security is enabled on all tables. Products are publicly readable when `active = true`; admins have full catalog access.
@@ -110,14 +113,17 @@ Each product stores a `customization_options` JSON array:
 
 Each choice may include `priceModifier` (USD). Logic lives in `src/utils/pricing.js`.
 
-## Checkout flow
+## Checkout & payment
+
+Circuit Revive uses an **invoice-after-review** flow — common for custom and restoration shops where builds are verified before billing.
 
 1. User signs in and adds customized items to the cart.
-2. `/checkout` collects a shipping address.
-3. An `orders` row and related `order_items` are inserted via Supabase.
-4. Order status starts as `pending` — admins update status in `/admin`.
+2. `/checkout` collects a shipping address and submits the order.
+3. An `orders` row and related `order_items` are created with status **`pending`**.
+4. The shop reviews the configuration (admin marks **`paid`** once payment is received via invoice, wire, etc.).
+5. Admin moves the order through **`processing`** → **`shipped`** with a tracking number.
 
-Payment gateway integration (e.g. Stripe via Supabase Edge Functions) can be added later; orders are persisted regardless.
+No card data is collected in the app. Payment happens outside the storefront (email invoice, bank transfer, or POS). The order status workflow reflects that handoff.
 
 ## Admin panel
 
@@ -127,6 +133,7 @@ At `/admin` (admin role only):
 - Edit customization options as JSON
 - Upload the seed catalog in one click
 - View all orders and update status
+- Enter a carrier + tracking number and mark orders shipped (simulated tracking timeline for portfolio demos)
 
 ## Environment variables
 
@@ -135,10 +142,11 @@ At `/admin` (admin role only):
 | `VITE_SUPABASE_URL` | For backend features | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | For backend features | Supabase anon/public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Optional | For `npm run seed` only — never expose in frontend |
+| `DATABASE_URL` | Optional | Postgres URI for `npm run migrate` |
 
 ## Next steps
 
-- Stripe checkout via Supabase Edge Function + webhook to set `orders.status = 'paid'`
+- Automated invoice emails on new orders (Supabase triggers + Resend/SendGrid)
 - Upload product photos to the `product-images` storage bucket
 - Email notifications on new orders (Supabase triggers + Resend/SendGrid)
 - Load saved build selections from URL query params

@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react'
 import { deleteProduct, fetchAllOrders, fetchProducts, updateOrderStatus, upsertProduct } from '../api/products'
+import {
+  shipOrderWithTracking,
+} from '../api/tracking'
 import { useProducts } from '../hooks/useProducts'
 import { seedProducts } from '../data/products'
 import { formatPrice } from '../utils/pricing'
 import AdminProductForm from '../components/admin/AdminProductForm'
+import OrderTrackingPanel from '../components/orders/OrderTrackingPanel'
 import Button from '../components/ui/Button'
 
 const ORDER_STATUSES = ['pending', 'paid', 'processing', 'shipped', 'cancelled']
+const CARRIERS = ['ups', 'usps', 'fedex', 'other']
 
 export default function AdminPage() {
   const { reloadAll } = useProducts()
@@ -15,6 +20,8 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState('')
+  const [trackingDrafts, setTrackingDrafts] = useState({})
+  const [shippingOrderId, setShippingOrderId] = useState(null)
 
   useEffect(() => {
     fetchAllOrders().then(({ data }) => setOrders(data ?? []))
@@ -24,6 +31,31 @@ export default function AdminPage() {
   function refreshAdminProducts() {
     fetchProducts({ includeInactive: true }).then(({ data }) => setAdminProducts(data ?? []))
     reloadAll()
+  }
+
+  function getTrackingDraft(order) {
+    return trackingDrafts[order.id] ?? {
+      trackingNumber: order.tracking_number ?? '',
+      carrier: order.carrier ?? 'ups',
+    }
+  }
+
+  function updateTrackingDraft(orderId, patch) {
+    setTrackingDrafts((prev) => {
+      const order = orders.find((item) => item.id === orderId)
+      const current = prev[orderId] ?? {
+        trackingNumber: order?.tracking_number ?? '',
+        carrier: order?.carrier ?? 'ups',
+      }
+      return {
+        ...prev,
+        [orderId]: { ...current, ...patch },
+      }
+    })
+  }
+
+  function updateOrderInState(orderId, patch) {
+    setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, ...patch } : order)))
   }
 
   async function handleSaveProduct(product) {
@@ -51,11 +83,36 @@ export default function AdminPage() {
   async function handleStatusChange(orderId, status) {
     const { error } = await updateOrderStatus(orderId, status)
     if (error) setMessage(error.message)
-    else {
-      setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status } : o)),
-      )
+    else updateOrderInState(orderId, { status })
+  }
+
+  async function handleShipOrder(order) {
+    const draft = getTrackingDraft(order)
+    if (!draft.trackingNumber.trim()) {
+      setMessage('Enter a tracking number before marking the order as shipped.')
+      return
     }
+
+    setShippingOrderId(order.id)
+    setMessage('')
+
+    const { data, error } = await shipOrderWithTracking(order.id, draft)
+    if (error) {
+      setMessage(error.message)
+      setShippingOrderId(null)
+      return
+    }
+
+    updateOrderInState(order.id, data)
+    setMessage('Order marked as shipped with tracking.')
+    setShippingOrderId(null)
+  }
+
+  function handleTrackingUpdated(orderId, tracking) {
+    updateOrderInState(orderId, {
+      tracking_status: tracking,
+      tracking_updated_at: tracking?.lastUpdated ?? new Date().toISOString(),
+    })
   }
 
   function startNewProduct() {
@@ -165,34 +222,76 @@ export default function AdminPage() {
           <p className="py-8 text-text-muted">No orders yet.</p>
         ) : (
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
-            {orders.map((order) => (
-              <li key={order.id} className="panel rounded-[10px] p-4">
-                <div className="mb-2 flex flex-wrap items-center gap-3">
-                  <code>{order.id.slice(0, 8)}…</code>
-                  <span>{new Date(order.created_at).toLocaleDateString()}</span>
-                  <strong>{formatPrice(Number(order.subtotal))}</strong>
-                </div>
-                <label className="my-2 flex items-center gap-2 text-sm text-text-muted">
-                  Status
-                  <select
-                    className="rounded-md border border-border bg-bg px-2 py-1.5 text-text-h"
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                  >
-                    {ORDER_STATUSES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+            {orders.map((order) => {
+              const draft = getTrackingDraft(order)
+              const isShipping = shippingOrderId === order.id
+
+              return (
+                <li key={order.id} className="panel rounded-[10px] p-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-3">
+                    <code>{order.id.slice(0, 8)}…</code>
+                    <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                    <strong>{formatPrice(Number(order.subtotal))}</strong>
+                  </div>
+                  <label className="my-2 flex items-center gap-2 text-sm text-text-muted">
+                    Status
+                    <select
+                      className="rounded-md border border-border bg-bg px-2 py-1.5 text-text-h"
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                    >
+                      {ORDER_STATUSES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="my-3 flex flex-wrap items-end gap-2 text-sm">
+                    <label className="flex flex-col gap-1 text-text-muted">
+                      Carrier
+                      <select
+                        className="rounded-md border border-border bg-bg px-2 py-1.5 text-text-h"
+                        value={draft.carrier}
+                        onChange={(e) => updateTrackingDraft(order.id, { carrier: e.target.value })}
+                      >
+                        {CARRIERS.map((carrier) => (
+                          <option key={carrier} value={carrier}>{carrier.toUpperCase()}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-text-muted">
+                      Tracking number
+                      <input
+                        className="rounded-md border border-border bg-bg px-2 py-1.5 text-text-h"
+                        value={draft.trackingNumber}
+                        onChange={(e) => updateTrackingDraft(order.id, { trackingNumber: e.target.value })}
+                        placeholder="1Z999AA10123456784"
+                      />
+                    </label>
+                    <Button
+                      size="sm"
+                      onClick={() => handleShipOrder(order)}
+                      disabled={isShipping}
+                    >
+                      {isShipping ? 'Shipping…' : 'Save tracking & ship'}
+                    </Button>
+                  </div>
+
+                  <OrderTrackingPanel
+                    order={order}
+                    onTrackingUpdated={handleTrackingUpdated}
+                  />
+
+                  <ul className="m-0 list-disc pl-4 text-sm text-text-muted">
+                    {(order.order_items ?? []).map((item) => (
+                      <li key={item.id}>
+                        {item.product_name} × {item.quantity}
+                      </li>
                     ))}
-                  </select>
-                </label>
-                <ul className="m-0 list-disc pl-4 text-sm text-text-muted">
-                  {(order.order_items ?? []).map((item) => (
-                    <li key={item.id}>
-                      {item.product_name} × {item.quantity}
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
+                  </ul>
+                </li>
+              )
+            })}
           </ul>
         )}
       </section>

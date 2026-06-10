@@ -23,12 +23,17 @@ export default function LoginPage() {
 
   if (!isConfigured) {
     return (
-      <div className="grid min-h-[50vh] place-items-center">
-        <div className="panel w-full max-w-[420px] p-8 text-left">
-          <h1>Supabase required</h1>
-          <p>Copy .env.example to .env and add your Supabase project credentials.</p>
-          <Link to="/">Back home</Link>
-        </div>
+      <div className="panel w-full max-w-[440px] p-8 text-left shadow-card">
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-phosphor">Authentication</p>
+        <h1 className="!mb-3 text-[1.75rem]">Supabase required</h1>
+        <p className="mb-6 text-text-muted">
+          Copy <code className="font-mono text-sm text-text">.env.example</code> to{' '}
+          <code className="font-mono text-sm text-text">.env</code> and add your Supabase project
+          credentials to enable sign in.
+        </p>
+        <Link to="/" className="btn btn-primary no-underline">
+          Back home
+        </Link>
       </div>
     )
   }
@@ -52,81 +57,102 @@ export default function LoginPage() {
     }
   }
 
+  function switchMode(next) {
+    setMode(next)
+    setMessage('')
+  }
+
   return (
-    <div className="grid min-h-[50vh] place-items-center">
-      <div className="panel w-full max-w-[420px] p-8 text-left">
-        <h1>{mode === 'signin' ? 'Sign in' : 'Create account'}</h1>
-        <p className="my-2 mb-5 text-text-muted">
-          {mode === 'signin'
-            ? 'Access saved builds and order history.'
-            : 'Join Circuit Revive to save custom builds and checkout.'}
-        </p>
+    <div className="panel w-full max-w-[440px] p-8 text-left shadow-card">
+      <p className="mb-2 font-mono text-xs uppercase tracking-widest text-phosphor">Authentication</p>
+      <h1 className="!mb-3 text-[1.75rem]">{mode === 'signin' ? 'Sign in' : 'Create account'}</h1>
+      <p className="mb-6 text-text-muted">
+        {mode === 'signin'
+          ? 'Access saved builds, order history, and checkout.'
+          : 'Join Circuit Revive to save custom builds and checkout.'}
+      </p>
 
-        <div className="mb-5 flex gap-2">
-          <button
-            type="button"
-            className={cn('filter-chip', mode === 'signin' && 'filter-chip-active')}
-            onClick={() => setMode('signin')}
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            className={cn('filter-chip', mode === 'signup' && 'filter-chip-active')}
-            onClick={() => setMode('signup')}
-          >
-            Sign up
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {mode === 'signup' && (
-            <label className="form-label">
-              Full name
-              <input
-                className="form-input"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
-              />
-            </label>
-          )}
-          <label className="form-label">
-            Email
-            <input
-              className="form-input"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-          </label>
-          <label className="form-label">
-            Password
-            <input
-              className="form-input"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            />
-          </label>
-
-          {(authError || message) && (
-            <p className={cn('text-sm', authError ? 'text-danger' : 'text-phosphor')}>
-              {authError || message}
-            </p>
-          )}
-
-          <Button type="submit" variant="primary" size="lg" className="w-full" disabled={loading}>
-            {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
-          </Button>
-        </form>
+      <div className="mb-6 flex gap-2" role="tablist" aria-label="Authentication mode">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'signin'}
+          className={cn('filter-chip', mode === 'signin' && 'filter-chip-active')}
+          onClick={() => switchMode('signin')}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'signup'}
+          className={cn('filter-chip', mode === 'signup' && 'filter-chip-active')}
+          onClick={() => switchMode('signup')}
+        >
+          Sign up
+        </button>
       </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-1">
+        {mode === 'signup' && (
+          <label className="form-label">
+            Full name
+            <input
+              className="form-input"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              autoComplete="name"
+              placeholder="Ada Lovelace"
+            />
+          </label>
+        )}
+        <label className="form-label">
+          Email
+          <input
+            className="form-input"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            placeholder="you@example.com"
+          />
+        </label>
+        <label className="form-label">
+          Password
+          <input
+            className="form-input"
+            type="password"
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+            placeholder={mode === 'signin' ? 'Your password' : 'At least 6 characters'}
+          />
+        </label>
+
+        {(authError || message) && (
+          <p
+            className={cn('mb-2 text-sm', authError ? 'text-danger' : 'text-phosphor')}
+            role={authError ? 'alert' : 'status'}
+          >
+            {authError || message}
+          </p>
+        )}
+
+        <Button type="submit" variant="primary" size="lg" className="mt-2 w-full" disabled={loading}>
+          {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+        </Button>
+      </form>
+
+      {from !== '/account' && (
+        <p className="mt-5 text-center text-sm text-text-muted">
+          You will return to{' '}
+          <span className="font-mono text-text">{from}</span> after signing in.
+        </p>
+      )}
     </div>
   )
 }

@@ -44,19 +44,17 @@ export default function Header() {
       </nav>
 
       <div className="flex flex-wrap items-center gap-3">
-        {isConfigured && (
-          isAuthenticated ? (
-            <div className="flex items-center gap-2 text-sm text-text-muted">
-              <span>{profile?.full_name ?? profile?.email ?? 'Signed in'}</span>
-              <Button variant="default" size="sm" onClick={signOut}>
-                Sign out
-              </Button>
-            </div>
-          ) : (
-            <Link to="/login" className="btn btn-sm no-underline">
-              Sign in
-            </Link>
-          )
+        {isAuthenticated ? (
+          <div className="flex items-center gap-2 text-sm text-text-muted">
+            <span>{profile?.full_name ?? profile?.email ?? 'Signed in'}</span>
+            <Button variant="default" size="sm" onClick={signOut} disabled={!isConfigured}>
+              Sign out
+            </Button>
+          </div>
+        ) : (
+          <Link to="/login" className="btn btn-sm no-underline">
+            Sign in
+          </Link>
         )}
 
         <button

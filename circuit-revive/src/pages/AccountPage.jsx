@@ -6,10 +6,12 @@ import { useAuth } from '../hooks/useAuth'
 import { useProducts } from '../hooks/useProducts'
 import { formatPrice, summarizeSelections } from '../utils/pricing'
 import { cn } from '../lib/cn'
+import { getUserFullName } from '../utils/userDisplay'
 import Button from '../components/ui/Button'
+import OrderTrackingPanel from '../components/orders/OrderTrackingPanel'
 
 export default function AccountPage() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const { getProductById } = useProducts()
   const [searchParams] = useSearchParams()
   const newOrderId = searchParams.get('order')
@@ -43,16 +45,38 @@ export default function AccountPage() {
     }
   }
 
+  function handleTrackingUpdated(orderId, tracking) {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              tracking_status: tracking,
+              tracking_updated_at: tracking?.lastUpdated ?? new Date().toISOString(),
+            }
+          : order,
+      ),
+    )
+  }
+
   if (loading) return <p className="py-8 text-text-muted">Loading account…</p>
+
+  const fullName = getUserFullName(profile, user)
 
   return (
     <div className="text-left">
       <h1>My account</h1>
-      <p className="mb-6 text-text-muted">Hello, {profile?.full_name ?? profile?.email}</p>
+      <p className="mb-6 text-text-muted">
+        Hello, <span className="font-medium text-text-h">{fullName || profile?.email || user?.email}</span>
+      </p>
 
       {newOrderId && (
         <div className="mb-5 rounded-lg border border-phosphor/35 bg-phosphor/12 px-4 py-3.5 text-phosphor">
-          Order placed successfully. Reference: <code>{newOrderId.slice(0, 8)}…</code>
+          <p className="mb-1 font-medium">Order submitted</p>
+          <p className="text-sm leading-relaxed">
+            Reference <code>{newOrderId.slice(0, 8)}…</code>. We&apos;ll review your build and email an
+            invoice with payment instructions to <strong>{profile?.email}</strong> within 1–2 business days.
+          </p>
         </div>
       )}
 
@@ -73,6 +97,16 @@ export default function AccountPage() {
                   <span className={cn('status-pill', `status-pill-${order.status}`)}>{order.status}</span>
                   <strong>{formatPrice(Number(order.subtotal))}</strong>
                 </div>
+                {order.status === 'pending' && (
+                  <p className="mb-2 text-sm text-text-muted">
+                    Awaiting invoice — we&apos;ll email payment instructions after we review your order.
+                  </p>
+                )}
+                {order.status === 'paid' && (
+                  <p className="mb-2 text-sm text-text-muted">
+                    Payment received. Your order will move to processing shortly.
+                  </p>
+                )}
                 <ul className="m-0 list-disc pl-4 text-sm text-text-muted">
                   {(order.order_items ?? []).map((item) => (
                     <li key={item.id}>
@@ -80,6 +114,12 @@ export default function AccountPage() {
                     </li>
                   ))}
                 </ul>
+                {(order.status === 'shipped' || order.tracking_number) && (
+                  <OrderTrackingPanel
+                    order={order}
+                    onTrackingUpdated={handleTrackingUpdated}
+                  />
+                )}
               </li>
             ))}
           </ul>

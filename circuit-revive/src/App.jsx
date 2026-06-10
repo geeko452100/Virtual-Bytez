@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartProvider'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
 import CartDrawer from './components/cart/CartDrawer'
+import AuthLayout from './components/auth/AuthLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import ShopPage from './pages/ShopPage'
@@ -23,7 +24,6 @@ function AppLayout() {
           <Route path="/" element={<HomePage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/:productId" element={<ProductPage />} />
-          <Route path="/login" element={<LoginPage />} />
           <Route
             path="/account"
             element={
@@ -71,7 +71,17 @@ export default function App() {
       <ProductsProvider>
         <CartProvider>
           <BrowserRouter>
-            <AppLayout />
+            <Routes>
+              <Route
+                path="/login"
+                element={
+                  <AuthLayout>
+                    <LoginPage />
+                  </AuthLayout>
+                }
+              />
+              <Route path="*" element={<AppLayout />} />
+            </Routes>
           </BrowserRouter>
         </CartProvider>
       </ProductsProvider>
