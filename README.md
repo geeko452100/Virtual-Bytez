@@ -1,6 +1,6 @@
 # Virtual Bytez
 
-A vintage tech storefront with **user-customizable product options** — **React + Vite** frontend, **[Virtual-Bytez-Backend](https://github.com/geeko452100/Virtual-Bytez-Backend)** API, and **Supabase** for auth and data.
+A vintage tech storefront with **user-customizable product options** — **React + Vite** frontend backed entirely by **Supabase** (Auth, Postgres, RLS, and Storage).
 
 Browse restored classics — Commodore 64, Macintosh SE, Walkman, Game Boy, Model M — configure finishes, mods, and extras with live pricing, save builds, and place orders.
 
@@ -10,53 +10,28 @@ Browse restored classics — Commodore 64, Macintosh SE, Walkman, Game Boy, Mode
 |------|-----------------|
 | **Shop** | Category filters, product images, condition grades (1–10), stock status |
 | **Customization** | Select, checkbox, and text (engraving) options with live price updates |
-| **Cart & checkout** | Persistent cart UI, order creation with line items via API |
+| **Cart & checkout** | Persistent cart UI, order creation with line items via Supabase |
 | **Auth** | Email/password sign-up and sign-in via Supabase Auth |
 | **Saved builds** | Logged-in users save and reload custom configurations |
 | **Admin** | Manage catalog, stock, order statuses, and shipment tracking (admin role required) |
 | **Routing** | Shareable URLs — `/shop`, `/shop/c64`, `/checkout`, `/account`, `/admin` |
 
-Without Supabase credentials the app falls back to the local seed catalog; auth, checkout, and saved builds require a configured backend.
+Without Supabase credentials the app falls back to the local seed catalog; auth, checkout, and saved builds require a configured Supabase project.
 
 ## Quick start
 
-### 1. Start the API
-
-Clone and run the backend in a separate terminal:
-
-```bash
-git clone https://github.com/geeko452100/Virtual-Bytez-Backend.git
-cd Virtual-Bytez-Backend
-npm install
-cp .env.example .env   # add Supabase credentials
-npm run dev            # http://localhost:3001
-```
-
-See the [backend README](https://github.com/geeko452100/Virtual-Bytez-Backend) for migrations, seeding, and deploy.
-
-### 2. Start the frontend
-
-```bash
-npm install
-cp .env.example .env   # add Supabase + API URL
-npm run dev            # http://localhost:5173
-```
-
-Vite proxies `/api` → `http://localhost:3001` in dev.
-
-### 3. Configure Supabase
+### 1. Create a Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Run migrations from [Virtual-Bytez-Backend](https://github.com/geeko452100/Virtual-Bytez-Backend) (`npm run migrate` or SQL Editor).
-3. Copy the **Project URL** and **anon public** key into `.env`:
+2. Copy the **Project URL** and **anon public** key into `.env`:
 
    ```env
    VITE_SUPABASE_URL=https://xxxx.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJ...
-   VITE_API_URL=/api
    ```
 
-4. Seed the catalog via the backend (`npm run seed`) or **Admin UI** → **Upload seed catalog**.
+3. Run database migrations (see below).
+4. Seed the catalog via **Admin UI** → **Upload seed catalog** (after promoting your account to admin).
 5. Promote your account to admin (SQL Editor):
 
    ```sql
@@ -64,6 +39,24 @@ Vite proxies `/api` → `http://localhost:3001` in dev.
    set role = 'admin'
    where email = 'you@example.com';
    ```
+
+### 2. Run migrations
+
+Add your database connection string to `.env` (Supabase Dashboard → Project Settings → Database → URI), then:
+
+```bash
+npm install
+cp .env.example .env   # add Supabase credentials + DATABASE_URL
+npm run migrate
+```
+
+Alternatively, paste the SQL files from `supabase/migrations/` into the Supabase SQL Editor in order.
+
+### 3. Start the frontend
+
+```bash
+npm run dev            # http://localhost:5173
+```
 
 ## Scripts
 
@@ -73,44 +66,47 @@ Vite proxies `/api` → `http://localhost:3001` in dev.
 | `npm run build` | Production build |
 | `npm run preview` | Preview production build |
 | `npm run lint` | ESLint |
+| `npm run migrate` | Apply Supabase SQL migrations |
 | `npm run download-images` | Download product image assets |
 
 ## Project structure
 
 ```
 ├── src/
-│   ├── api/                 # HTTP client wrappers → Express API
+│   ├── api/                 # Supabase data access (products, orders, builds, tracking)
 │   ├── context/             # Auth, products, cart providers
 │   ├── hooks/
-│   ├── lib/                 # Supabase auth client, API client, config
+│   ├── lib/                 # Supabase client, config, validation
 │   ├── data/products.js     # Local seed catalog (offline fallback)
 │   ├── components/
 │   └── pages/
+├── supabase/migrations/     # Postgres schema, RLS policies, triggers
 └── .env.example
 ```
-
-Backend (separate repo): [github.com/geeko452100/Virtual-Bytez-Backend](https://github.com/geeko452100/Virtual-Bytez-Backend)
 
 ## Architecture
 
 ```
 Browser (React)
-  ├─ Supabase Auth (sign-in / sign-up / session)
-  └─ Virtual-Bytez-Backend /api/*
-        └─ Supabase Postgres + RLS (via user JWT)
+  └─ Supabase JS client
+        ├─ Auth (sign-in / sign-up / session)
+        ├─ Postgres + RLS (products, orders, saved builds, profiles)
+        └─ Storage (product images bucket)
 ```
+
+All catalog, checkout, admin, and tracking operations talk directly to Supabase. Row Level Security enforces customer vs admin access; no separate Express API is required.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_SUPABASE_URL` | For auth + API | Supabase project URL (browser) |
-| `VITE_SUPABASE_ANON_KEY` | For auth + API | Supabase anon key (browser) |
-| `VITE_API_URL` | Optional | API base URL — defaults to `/api` (Vite proxy in dev) |
+| `VITE_SUPABASE_URL` | For auth + data | Supabase project URL (browser) |
+| `VITE_SUPABASE_ANON_KEY` | For auth + data | Supabase anon key (browser) |
+| `DATABASE_URL` | For migrations only | Postgres connection string (`npm run migrate`) |
 
 ## Deploy to Cloudflare Pages
 
-The frontend is a static Vite build. Deploy the API from [Virtual-Bytez-Backend](https://github.com/geeko452100/Virtual-Bytez-Backend) separately and set `VITE_API_URL` to your API URL.
+The frontend is a static Vite build. Point it at your Supabase project with the env vars above.
 
 ### Build settings
 
@@ -124,7 +120,6 @@ The frontend is a static Vite build. Deploy the API from [Virtual-Bytez-Backend]
 ```env
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_API_URL=https://your-api.example.com/api
 ```
 
 Configure Supabase auth redirect URLs to match your Pages domain.

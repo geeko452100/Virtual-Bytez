@@ -1,0 +1,2 @@
+-- Optional SQL seed hook for `supabase db reset`.
+-- The full vintage catalog lives in src/data/products.js — run `npm run seed` instead.
