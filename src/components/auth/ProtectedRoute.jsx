@@ -1,8 +1,12 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
+function getRedirectPath(location) {
+  return `${location.pathname}${location.search}`
+}
+
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const { isAuthenticated, isAdmin, loading, isConfigured } = useAuth()
+  const { isAuthenticated, isAdmin, loading, profileLoading, isConfigured } = useAuth()
   const location = useLocation()
 
   if (!isConfigured) {
@@ -16,16 +20,22 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     )
   }
 
-  if (loading) {
+  if (loading || (requireAdmin && isAuthenticated && profileLoading)) {
     return <p className="py-8 text-text-muted">Loading…</p>
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />
+    return <Navigate to="/login" state={{ from: getRedirectPath(location) }} replace />
   }
 
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/account" replace />
+    return (
+      <Navigate
+        to="/account"
+        replace
+        state={{ accessDenied: 'admin' }}
+      />
+    )
   }
 
   return children

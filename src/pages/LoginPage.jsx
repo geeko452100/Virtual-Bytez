@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { normalizeAuthInput } from '../utils/authErrors'
 import { cn } from '../lib/cn'
 import Button from '../components/ui/Button'
 
 export default function LoginPage() {
-  const { signIn, signUp, authError, isConfigured, isAuthenticated } = useAuth()
+  const { signIn, signUp, authError, clearAuthError, isConfigured, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from ?? '/account'
@@ -42,24 +43,43 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setMessage('')
+    clearAuthError()
+
+    const normalizedEmail = normalizeAuthInput(email)
+    const normalizedPassword = normalizeAuthInput(password)
+    const normalizedName = normalizeAuthInput(fullName)
 
     if (mode === 'signin') {
-      const { error } = await signIn({ email, password })
+      const { data, error } = await signIn({ email: normalizedEmail, password: normalizedPassword })
       setLoading(false)
-      if (!error) navigate(from, { replace: true })
-    } else {
-      const { error } = await signUp({ email, password, fullName })
-      setLoading(false)
-      if (!error) {
-        setMessage('Check your email to confirm your account, then sign in.')
-        setMode('signin')
+      if (!error && data?.session) {
+        navigate(from, { replace: true })
       }
+      return
     }
+
+    const { data, error } = await signUp({
+      email: normalizedEmail,
+      password: normalizedPassword,
+      fullName: normalizedName,
+    })
+    setLoading(false)
+
+    if (error) return
+
+    if (data?.session) {
+      navigate(from, { replace: true })
+      return
+    }
+
+    setMessage('Check your email to confirm your account, then sign in.')
+    setMode('signin')
   }
 
   function switchMode(next) {
     setMode(next)
     setMessage('')
+    clearAuthError()
   }
 
   return (
