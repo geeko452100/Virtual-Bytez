@@ -1,6 +1,6 @@
 /** Reusable customization schemas for catalog entries. */
 
-export function engraving(placeholder = 'e.g. CIRCUIT REVIVE #042', maxLength = 24, price = 15) {
+export function engraving(placeholder = 'e.g. VIRTUAL BYTEZ #042', maxLength = 24, price = 15) {
   return {
     id: 'engraving',
     label: 'Custom engraving',

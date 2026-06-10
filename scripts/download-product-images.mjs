@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const outDir = join(__dirname, '..', 'public', 'images')
 mkdirSync(outDir, { recursive: true })
 
-const USER_AGENT = 'CircuitRevive/1.0 (https://github.com/Circuit-Revive; local catalog image download)'
+const USER_AGENT = 'VirtualBytez/1.0 (https://github.com/geeko452100/Virtual-Bytez; local catalog image download)'
 
 /** Product id → primary Commons filename, then search terms for fallback. */
 const IMAGE_MAP = {

@@ -1,4 +1,4 @@
--- Circuit Revive initial schema
+-- Virtual Bytez initial schema
 -- Run in Supabase SQL Editor or via: supabase db push
 
 create extension if not exists "pgcrypto";

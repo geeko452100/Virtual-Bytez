@@ -9,7 +9,7 @@ export default function HomePage() {
         </p>
         <h1>Vintage tech,<br />customized for you</h1>
         <p className="mx-auto my-4 mb-7 max-w-[540px] text-text-muted">
-          Circuit Revive restores and configures classic computers, audio gear, gaming hardware, and film cameras.
+          Virtual Bytez restores and configures classic computers, audio gear, gaming hardware, and film cameras.
           Pick your finish, mods, and extras — we build it to order.
         </p>
         <Link to="/shop" className="btn btn-primary btn-lg inline-block no-underline">

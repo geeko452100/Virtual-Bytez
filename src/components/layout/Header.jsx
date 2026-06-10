@@ -19,7 +19,7 @@ export default function Header() {
       <div className="min-w-[200px] flex-1 text-left">
         <Link to="/" className="inline-flex items-center gap-2 no-underline text-text-h">
           <span className="font-mono text-xl text-accent">▮</span>
-          <span className="font-mono text-[1.35rem] font-bold uppercase tracking-widest">Circuit Revive</span>
+          <span className="font-mono text-[1.35rem] font-bold uppercase tracking-widest">Virtual Bytez</span>
         </Link>
         <p className="mt-1 text-sm text-text-muted">Curated vintage tech, built your way</p>
       </div>

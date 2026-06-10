@@ -6,7 +6,7 @@ export default function AuthLayout({ children }) {
       <header className="py-6">
         <Link to="/" className="inline-flex items-center gap-2 no-underline text-text-h">
           <span className="font-mono text-xl text-accent">▮</span>
-          <span className="font-mono text-[1.35rem] font-bold uppercase tracking-widest">Circuit Revive</span>
+          <span className="font-mono text-[1.35rem] font-bold uppercase tracking-widest">Virtual Bytez</span>
         </Link>
       </header>
 

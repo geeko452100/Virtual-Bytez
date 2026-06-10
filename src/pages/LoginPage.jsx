@@ -69,7 +69,7 @@ export default function LoginPage() {
       <p className="mb-6 text-text-muted">
         {mode === 'signin'
           ? 'Access saved builds, order history, and checkout.'
-          : 'Join Circuit Revive to save custom builds and checkout.'}
+          : 'Join Virtual Bytez to save custom builds and checkout.'}
       </p>
 
       <div className="mb-6 flex gap-2" role="tablist" aria-label="Authentication mode">

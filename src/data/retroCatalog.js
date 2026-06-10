@@ -78,7 +78,7 @@ export const catalogEntries = [
           { value: 'keycaps', label: 'Replacement keycap set', priceModifier: 28 },
         ],
       },
-      engraving('e.g. CIRCUIT REVIVE #042'),
+      engraving('e.g. VIRTUAL BYTEZ #042'),
     ],
   },
   {

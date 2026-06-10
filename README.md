@@ -1,4 +1,4 @@
-# Circuit Revive
+# Virtual Bytez
 
 A full-stack vintage tech storefront with **user-customizable product options**, powered by **React + Vite** on the frontend and **Supabase** on the backend.
 
@@ -23,7 +23,6 @@ Without Supabase credentials the app falls back to the local seed catalog; auth,
 ### 1. Install and run the frontend
 
 ```bash
-cd circuit-revive
 npm install
 cp .env.example .env   # then fill in your Supabase values
 npm run dev
@@ -75,7 +74,6 @@ Restart `npm run dev` after changing `.env`.
 ## Project structure
 
 ```
-circuit-revive/
 ├── supabase/migrations/     # Database schema + RLS policies
 ├── scripts/seed-catalog.mjs # CLI seed helper
 ├── src/
@@ -115,7 +113,7 @@ Each choice may include `priceModifier` (USD). Logic lives in `src/utils/pricing
 
 ## Checkout & payment
 
-Circuit Revive uses an **invoice-after-review** flow — common for custom and restoration shops where builds are verified before billing.
+Virtual Bytez uses an **invoice-after-review** flow — common for custom and restoration shops where builds are verified before billing.
 
 1. User signs in and adds customized items to the cart.
 2. `/checkout` collects a shipping address and submits the order.
@@ -156,7 +154,7 @@ The frontend is a static Vite build. Supabase stays your backend — Cloudflare 
 
 | Setting | Value |
 |---------|--------|
-| Root directory | `circuit-revive` |
+| Root directory | `/` (repo root) |
 | Build command | `npm run build` |
 | Build output directory | `dist` |
 
@@ -193,10 +191,9 @@ Update these again if you add a custom domain on Cloudflare.
 ### CLI deploy (optional)
 
 ```bash
-cd circuit-revive
 npm install
 npm run build
-npx wrangler pages deploy dist --project-name=circuit-revive
+npx wrangler pages deploy dist --project-name=virtual-bytez
 ```
 
 Set `VITE_SUPABASE_*` in your shell before `npm run build`, or use dashboard env vars with Git-connected deploys instead.
