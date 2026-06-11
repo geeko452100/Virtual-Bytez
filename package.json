@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "download-images": "node scripts/download-product-images.mjs",
-    "migrate": "node scripts/run-migration.mjs"
+    "migrate": "node scripts/run-migration.mjs",
+    "seed": "node scripts/seed-catalog.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",

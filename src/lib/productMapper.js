@@ -1,3 +1,15 @@
+import { PRODUCT_IMAGES } from '../data/productImages'
+
+function normalizeOptions(value) {
+  return Array.isArray(value) ? value : []
+}
+
+export function resolveProductImageUrl(productId, imageUrl) {
+  const trimmed = imageUrl?.trim()
+  if (trimmed) return trimmed
+  return PRODUCT_IMAGES[productId] ?? null
+}
+
 export function mapProduct(row) {
   if (!row) return null
   return {
@@ -9,10 +21,10 @@ export function mapProduct(row) {
     description: row.description ?? '',
     condition: row.condition ?? '',
     conditionGrade: row.condition_grade ?? null,
-    imageUrl: row.image_url ?? null,
+    imageUrl: resolveProductImageUrl(row.id, row.image_url),
     stockCount: row.stock_count ?? 0,
     active: row.active ?? true,
-    customizationOptions: row.customization_options ?? [],
+    customizationOptions: normalizeOptions(row.customization_options),
   }
 }
 

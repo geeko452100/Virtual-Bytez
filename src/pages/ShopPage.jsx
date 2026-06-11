@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { CATEGORIES } from '../data/products'
 import { useProducts } from '../hooks/useProducts'
+import { isSupabaseConfigured } from '../lib/config'
 import ProductGrid from '../components/catalog/ProductGrid'
 import { cn } from '../lib/cn'
 
 export default function ShopPage() {
-  const { products, loading } = useProducts()
+  const { products, loading, error, source } = useProducts()
   const [activeCategory, setActiveCategory] = useState('all')
 
   const filteredProducts = useMemo(() => {
@@ -20,6 +21,11 @@ export default function ShopPage() {
       <header className="mb-6 text-left">
         <h1>Shop vintage tech</h1>
         <p className="mt-2 text-text-muted">Select a category, then customize any item to match your setup.</p>
+        {error && source === 'local' && isSupabaseConfigured && (
+          <p className="mt-3 rounded-lg border border-phosphor/35 bg-phosphor/10 px-4 py-3 text-sm text-phosphor">
+            {error}
+          </p>
+        )}
       </header>
 
       <div className="mb-6 flex flex-wrap gap-2" role="tablist" aria-label="Product categories">

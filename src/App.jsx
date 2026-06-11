@@ -11,6 +11,7 @@ import HomePage from './pages/HomePage'
 import ShopPage from './pages/ShopPage'
 import ProductPage from './pages/ProductPage'
 import LoginPage from './pages/LoginPage'
+import AuthCallbackPage from './pages/AuthCallbackPage'
 import AccountPage from './pages/AccountPage'
 import CheckoutPage from './pages/CheckoutPage'
 import AdminPage from './pages/AdminPage'
@@ -77,6 +78,14 @@ export default function App() {
                 element={
                   <AuthLayout>
                     <LoginPage />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="/auth/callback"
+                element={
+                  <AuthLayout>
+                    <AuthCallbackPage />
                   </AuthLayout>
                 }
               />

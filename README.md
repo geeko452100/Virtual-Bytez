@@ -31,7 +31,7 @@ Without Supabase credentials the app falls back to the local seed catalog; auth,
    ```
 
 3. Run database migrations (see below).
-4. Seed the catalog via **Admin UI** → **Upload seed catalog** (after promoting your account to admin).
+4. Seed the catalog: `npm run seed` (or **Admin UI** → **Upload seed catalog** after promoting your account).
 5. Promote your account to admin (SQL Editor):
 
    ```sql
@@ -67,6 +67,7 @@ npm run dev            # http://localhost:5173
 | `npm run preview` | Preview production build |
 | `npm run lint` | ESLint |
 | `npm run migrate` | Apply Supabase SQL migrations |
+| `npm run seed` | Upload local catalog to Supabase (needs service role key) |
 | `npm run download-images` | Download product image assets |
 
 ## Project structure
@@ -122,7 +123,33 @@ VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 ```
 
-Configure Supabase auth redirect URLs to match your Pages domain.
+Configure Supabase auth redirect URLs to match your Pages domain:
+
+- Site URL: `https://your-domain.com`
+- Redirect URLs: `https://your-domain.com/auth/callback`, `http://localhost:5173/auth/callback`
+
+## Troubleshooting
+
+### No products in the shop
+
+Supabase is configured but the `products` table is empty. The app falls back to the local seed catalog automatically, but you should still seed Supabase:
+
+```bash
+npm run seed
+```
+
+Requires `SUPABASE_SERVICE_ROLE_KEY` in `.env` (Dashboard → Project Settings → API).
+
+### Login / signup fails
+
+1. Run all migrations in `supabase/migrations/` (especially `001` profiles trigger and `007` API grants).
+2. In Supabase **Authentication → URL Configuration**, add `http://localhost:5173/auth/callback` and your production `/auth/callback` URL.
+3. If email confirmation is enabled, confirm your email before signing in.
+4. Check the browser console for RLS or permission errors.
+
+### Product images missing
+
+Images are served from `public/images/`. Run `npm run download-images` if files are missing locally. Supabase rows without `image_url` automatically fall back to local image paths.
 
 ## License
 

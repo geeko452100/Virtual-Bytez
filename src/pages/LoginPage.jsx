@@ -6,7 +6,7 @@ import { cn } from '../lib/cn'
 import Button from '../components/ui/Button'
 
 export default function LoginPage() {
-  const { signIn, signUp, authError, clearAuthError, isConfigured, isAuthenticated } = useAuth()
+  const { signIn, signUp, resetPassword, authError, clearAuthError, isConfigured, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from ?? '/account'
@@ -49,6 +49,16 @@ export default function LoginPage() {
     const normalizedPassword = normalizeAuthInput(password)
     const normalizedName = normalizeAuthInput(fullName)
 
+    if (mode === 'reset') {
+      const { error } = await resetPassword(normalizedEmail)
+      setLoading(false)
+      if (!error) {
+        setMessage('Password reset email sent. Check your inbox.')
+        setMode('signin')
+      }
+      return
+    }
+
     if (mode === 'signin') {
       const { data, error } = await signIn({ email: normalizedEmail, password: normalizedPassword })
       setLoading(false)
@@ -85,33 +95,37 @@ export default function LoginPage() {
   return (
     <div className="panel w-full max-w-[440px] p-8 text-left shadow-card">
       <p className="mb-2 font-mono text-xs uppercase tracking-widest text-phosphor">Authentication</p>
-      <h1 className="!mb-3 text-[1.75rem]">{mode === 'signin' ? 'Sign in' : 'Create account'}</h1>
+      <h1 className="!mb-3 text-[1.75rem]">
+        {mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Reset password'}
+      </h1>
       <p className="mb-6 text-text-muted">
-        {mode === 'signin'
-          ? 'Access saved builds, order history, and checkout.'
-          : 'Join Virtual Bytez to save custom builds and checkout.'}
+        {mode === 'signin' && 'Access saved builds, order history, and checkout.'}
+        {mode === 'signup' && 'Join Virtual Bytez to save custom builds and checkout.'}
+        {mode === 'reset' && 'Enter your account email and we will send a reset link.'}
       </p>
 
-      <div className="mb-6 flex gap-2" role="tablist" aria-label="Authentication mode">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === 'signin'}
-          className={cn('filter-chip', mode === 'signin' && 'filter-chip-active')}
-          onClick={() => switchMode('signin')}
-        >
-          Sign in
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === 'signup'}
-          className={cn('filter-chip', mode === 'signup' && 'filter-chip-active')}
-          onClick={() => switchMode('signup')}
-        >
-          Sign up
-        </button>
-      </div>
+      {mode !== 'reset' && (
+        <div className="mb-6 flex gap-2" role="tablist" aria-label="Authentication mode">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'signin'}
+            className={cn('filter-chip', mode === 'signin' && 'filter-chip-active')}
+            onClick={() => switchMode('signin')}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === 'signup'}
+            className={cn('filter-chip', mode === 'signup' && 'filter-chip-active')}
+            onClick={() => switchMode('signup')}
+          >
+            Sign up
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-1">
         {mode === 'signup' && (
@@ -139,19 +153,31 @@ export default function LoginPage() {
             placeholder="you@example.com"
           />
         </label>
-        <label className="form-label">
-          Password
-          <input
-            className="form-input"
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            placeholder={mode === 'signin' ? 'Your password' : 'At least 6 characters'}
-          />
-        </label>
+        {mode !== 'reset' && (
+          <label className="form-label">
+            Password
+            <input
+              className="form-input"
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              placeholder={mode === 'signin' ? 'Your password' : 'At least 6 characters'}
+            />
+          </label>
+        )}
+
+        {mode === 'signin' && (
+          <button
+            type="button"
+            className="mb-2 self-start text-sm text-text-muted underline-offset-2 hover:text-text hover:underline"
+            onClick={() => switchMode('reset')}
+          >
+            Forgot password?
+          </button>
+        )}
 
         {(authError || message) && (
           <p
@@ -163,9 +189,25 @@ export default function LoginPage() {
         )}
 
         <Button type="submit" variant="primary" size="lg" className="mt-2 w-full" disabled={loading}>
-          {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+          {loading
+            ? 'Please wait…'
+            : mode === 'signin'
+              ? 'Sign in'
+              : mode === 'signup'
+                ? 'Create account'
+                : 'Send reset link'}
         </Button>
       </form>
+
+      {mode === 'reset' && (
+        <button
+          type="button"
+          className="mt-4 text-sm text-text-muted underline-offset-2 hover:text-text hover:underline"
+          onClick={() => switchMode('signin')}
+        >
+          Back to sign in
+        </button>
+      )}
 
       {from !== '/account' && (
         <p className="mt-5 text-center text-sm text-text-muted">

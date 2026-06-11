@@ -16,7 +16,7 @@ export default function ProductCard({ product }) {
       <div className="flex flex-1 flex-col gap-2 p-5">
         <ConditionBadge grade={product.conditionGrade} condition={product.condition} />
         <p className="font-mono text-xs text-text-muted">
-          {product.customizationOptions.length} custom options
+          {(product.customizationOptions?.length ?? 0)} custom options
           {!inStock && ' · Out of stock'}
         </p>
         <h3 className="m-0">{product.name}</h3>
