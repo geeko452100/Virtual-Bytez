@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { deleteSavedBuild, fetchSavedBuilds } from '../api/savedBuilds'
 import { fetchUserOrders } from '../api/orders'
 import { useAuth } from '../hooks/useAuth'
@@ -13,8 +13,10 @@ import OrderTrackingPanel from '../components/orders/OrderTrackingPanel'
 export default function AccountPage() {
   const { profile, user } = useAuth()
   const { getProductById } = useProducts()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const newOrderId = searchParams.get('order')
+  const passwordUpdated = location.state?.passwordUpdated
 
   const [orders, setOrders] = useState([])
   const [builds, setBuilds] = useState([])
@@ -69,6 +71,13 @@ export default function AccountPage() {
       <p className="mb-6 text-text-muted">
         Hello, <span className="font-medium text-text-h">{fullName || profile?.email || user?.email}</span>
       </p>
+
+      {passwordUpdated && (
+        <div className="mb-5 rounded-lg border border-phosphor/35 bg-phosphor/12 px-4 py-3.5 text-phosphor">
+          <p className="font-medium">Password updated</p>
+          <p className="text-sm leading-relaxed">Your new password is saved. You&apos;re signed in.</p>
+        </div>
+      )}
 
       {newOrderId && (
         <div className="mb-5 rounded-lg border border-phosphor/35 bg-phosphor/12 px-4 py-3.5 text-phosphor">

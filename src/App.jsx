@@ -12,6 +12,7 @@ import ShopPage from './pages/ShopPage'
 import ProductPage from './pages/ProductPage'
 import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import AccountPage from './pages/AccountPage'
 import CheckoutPage from './pages/CheckoutPage'
 import AdminPage from './pages/AdminPage'
@@ -86,6 +87,14 @@ export default function App() {
                 element={
                   <AuthLayout>
                     <AuthCallbackPage />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="/auth/reset-password"
+                element={
+                  <AuthLayout>
+                    <ResetPasswordPage />
                   </AuthLayout>
                 }
               />

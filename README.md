@@ -126,7 +126,7 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 Configure Supabase auth redirect URLs to match your Pages domain:
 
 - Site URL: `https://your-domain.com`
-- Redirect URLs: `https://your-domain.com/auth/callback`, `http://localhost:5173/auth/callback`
+- Redirect URLs: `https://your-domain.com/auth/callback`, `https://your-domain.com/auth/reset-password`, and the same paths on `http://localhost:5173`
 
 ## Troubleshooting
 
@@ -143,7 +143,7 @@ Requires `SUPABASE_SERVICE_ROLE_KEY` in `.env` (Dashboard → Project Settings �
 ### Login / signup fails
 
 1. Run all migrations in `supabase/migrations/` (especially `001` profiles trigger and `007` API grants).
-2. In Supabase **Authentication → URL Configuration**, add `http://localhost:5173/auth/callback` and your production `/auth/callback` URL.
+2. In Supabase **Authentication → URL Configuration**, add `/auth/callback` and `/auth/reset-password` for localhost and production.
 3. If email confirmation is enabled, confirm your email before signing in.
 4. Check the browser console for RLS or permission errors.
 

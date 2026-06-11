@@ -251,7 +251,7 @@ export function AuthProvider({ children }) {
     }
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     })
 
     if (error) {
@@ -261,6 +261,43 @@ export function AuthProvider({ children }) {
 
     return { data, error: null }
   }, [])
+
+  const updatePassword = useCallback(async (password) => {
+    setAuthError(null)
+    const supabase = getSupabase()
+    if (!supabase) {
+      const err = new Error('Supabase is not configured')
+      setAuthError(err.message)
+      return { error: err }
+    }
+
+    const normalizedPassword = normalizeAuthInput(password)
+    if (!normalizedPassword) {
+      const err = new Error('Password is required.')
+      setAuthError(err.message)
+      return { error: err }
+    }
+
+    if (normalizedPassword.length < 6) {
+      const err = new Error('Password must be at least 6 characters.')
+      setAuthError(err.message)
+      return { error: err }
+    }
+
+    const { data, error } = await supabase.auth.updateUser({ password: normalizedPassword })
+
+    if (error) {
+      setAuthError(formatAuthError(error))
+      return { data, error }
+    }
+
+    if (data.user) {
+      setUser(data.user)
+      await refreshProfile(data.user.id, data.user)
+    }
+
+    return { data, error: null }
+  }, [refreshProfile])
 
   const value = useMemo(
     () => ({
@@ -276,6 +313,7 @@ export function AuthProvider({ children }) {
       signIn,
       signOut,
       resetPassword,
+      updatePassword,
       refreshProfile,
       clearAuthError,
     }),
@@ -289,6 +327,7 @@ export function AuthProvider({ children }) {
       signIn,
       signOut,
       resetPassword,
+      updatePassword,
       refreshProfile,
       clearAuthError,
     ],
