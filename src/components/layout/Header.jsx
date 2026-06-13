@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useCart } from '../../hooks/useCart'
 import { cn } from '../../lib/cn'
 import Button from '../ui/Button'
+import BackToPortfolio from './BackToPortfolio'
 
 const navLinkClass = ({ isActive }) =>
   cn(
@@ -15,7 +16,9 @@ export default function Header() {
   const { isAuthenticated, isAdmin, profile, signOut, isConfigured } = useAuth()
 
   return (
-    <header className="flex flex-wrap items-center gap-6 border-b border-border py-5 max-md:flex-col max-md:items-stretch">
+    <header className="border-b border-border py-5">
+      <BackToPortfolio className="mb-4" />
+      <div className="flex flex-wrap items-center gap-6 max-md:flex-col max-md:items-stretch">
       <div className="min-w-[200px] flex-1 text-left">
         <Link to="/" className="inline-flex items-center gap-2 no-underline text-text-h">
           <span className="font-mono text-xl text-accent">▮</span>
@@ -69,6 +72,7 @@ export default function Header() {
             </span>
           )}
         </button>
+      </div>
       </div>
     </header>
   )

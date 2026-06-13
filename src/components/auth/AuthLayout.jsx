@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
+import BackToPortfolio from '../layout/BackToPortfolio'
 
 export default function AuthLayout({ children }) {
   return (
     <div className="mx-auto flex min-h-svh max-w-[1120px] flex-col px-5">
+      <BackToPortfolio className="pt-6" />
       <header className="py-6">
         <Link to="/" className="inline-flex items-center gap-2 no-underline text-text-h">
           <span className="font-mono text-xl text-accent">▮</span>
